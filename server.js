@@ -101,97 +101,209 @@ const questions = [
 ].map(([domain, prompt, options, answer], id) => ({ id, domain, prompt, options, answer }));
 
 // ----------------------------------------------------
-// STORAGE LAYER (Hybrid: MongoDB Atlas or File Storage)
+// STORAGE LAYER (Hybrid: MongoDB + Persistent Local File Backup)
 // ----------------------------------------------------
-// STORAGE LAYER (Direct MongoDB - No File Storage)
-// ----------------------------------------------------
+const DATA_DIR = process.env.VERCEL
+  ? path.join('/tmp', 'hccda_data')
+  : path.join(__dirname, 'data');
+const DB_FILE = path.join(DATA_DIR, 'attempts.json');
+
+function ensureDb() {
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+    if (!fs.existsSync(DB_FILE)) {
+      fs.writeFileSync(DB_FILE, '[]', 'utf8');
+    }
+  } catch (e) {
+    console.warn('Could not ensure local data directory:', e.message);
+  }
+}
+
+let db = [];
+function loadDb() {
+  ensureDb();
+  try {
+    if (fs.existsSync(DB_FILE)) {
+      const parsed = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+      db = Array.isArray(parsed) ? parsed.filter(r => r && typeof r === 'object' && !Array.isArray(r)) : [];
+    }
+  } catch {
+    if (!Array.isArray(db)) db = [];
+  }
+  return db;
+}
+
+let writeChain = Promise.resolve();
+let tmpCounter = 0;
+function saveDb() {
+  writeChain = writeChain.then(async () => {
+    try {
+      ensureDb();
+      const tmp = DB_FILE + '.' + process.pid + '.' + (tmpCounter++) + '.tmp';
+      const payload = JSON.stringify(db, null, 2);
+      for (let attempt = 0; attempt < 5; attempt++) {
+        try {
+          await fs.promises.writeFile(tmp, payload, 'utf8');
+          await fs.promises.rename(tmp, DB_FILE);
+          return;
+        } catch (error) {
+          await fs.promises.rm(tmp, { force: true }).catch(() => {});
+          if (attempt === 4) {
+            await fs.promises.writeFile(DB_FILE, payload, 'utf8');
+            return;
+          }
+          await new Promise(resolve => setTimeout(resolve, 50 * (attempt + 1)));
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to save to local file:', e.message);
+    }
+  }).catch(() => {});
+  return writeChain;
+}
+
 let cachedClient = null;
 let cachedDb = null;
+let lastMongoFailTime = 0;
+const MONGO_RETRY_INTERVAL = 10000; // 10s cooldown before retrying if offline
 
 async function getMongoDb() {
   const uri = process.env.MONGODB_URI;
-  if (!uri) {
-    console.warn('Notice: MONGODB_URI environment variable is not set.');
-    return null;
-  }
-  // Prevent localhost connection timeouts on Vercel cloud serverless
-  if (process.env.VERCEL && (uri.includes('localhost') || uri.includes('127.0.0.1'))) {
-    console.warn('Notice: localhost MongoDB cannot be reached from Vercel cloud. Please add your MongoDB Atlas URI in Vercel Environment Variables.');
-    return null;
-  }
+  if (!uri) return null;
+  if (process.env.VERCEL && (uri.includes('localhost') || uri.includes('127.0.0.1'))) return null;
   if (cachedDb) return cachedDb;
+
+  if (Date.now() - lastMongoFailTime < MONGO_RETRY_INTERVAL) {
+    return null;
+  }
+
   try {
     const { MongoClient } = require('mongodb');
     if (!cachedClient) {
       cachedClient = new MongoClient(uri, {
         maxPoolSize: 10,
-        serverSelectionTimeoutMS: 5000,
+        serverSelectionTimeoutMS: 2000,
       });
       await cachedClient.connect();
     }
     cachedDb = cachedClient.db(process.env.MONGODB_DB_NAME || 'hccda_ai');
     return cachedDb;
   } catch (err) {
-    console.error('MongoDB connection error:', err.message);
+    lastMongoFailTime = Date.now();
     cachedClient = null;
     return null;
   }
 }
 
-// In-memory array (used strictly as temporary fallback if MongoDB is not connected - NO files)
-const memDb = [];
-
-// Unified Async Storage Helpers (Direct MongoDB)
+// Unified Async Storage Helpers (Hybrid: Mongo + File)
 async function getAttempt(id) {
   const mdb = await getMongoDb();
   if (mdb) {
-    return await mdb.collection('attempts').findOne({ id }, { projection: { _id: 0 } });
+    try {
+      const doc = await mdb.collection('attempts').findOne({ id }, { projection: { _id: 0 } });
+      if (doc) return doc;
+    } catch (e) {}
   }
-  return memDb.find(record => record.id === id) || null;
+  loadDb();
+  return db.find(record => record.id === id) || null;
 }
 
 async function saveAttempt(record) {
+  // Always persist to local file immediately
+  loadDb();
+  const idx = db.findIndex(r => r.id === record.id);
+  if (idx >= 0) {
+    db[idx] = record;
+  } else {
+    db.push(record);
+  }
+  await saveDb();
+
+  // Also sync to MongoDB if connected
   const mdb = await getMongoDb();
   if (mdb) {
-    const copy = { ...record };
-    delete copy._id;
-    await mdb.collection('attempts').updateOne({ id: record.id }, { $set: copy }, { upsert: true });
-    return;
-  }
-  const idx = memDb.findIndex(r => r.id === record.id);
-  if (idx >= 0) {
-    memDb[idx] = record;
-  } else {
-    memDb.push(record);
+    try {
+      const copy = { ...record };
+      delete copy._id;
+      await mdb.collection('attempts').updateOne({ id: record.id }, { $set: copy }, { upsert: true });
+    } catch (err) {
+      console.warn('Notice: MongoDB sync skipped, record safely stored in local backup.');
+    }
   }
 }
 
 async function getAllAttempts() {
+  loadDb();
+  const localMap = new Map(db.map(r => [r.id, r]));
+
   const mdb = await getMongoDb();
   if (mdb) {
-    return await mdb.collection('attempts').find({}, { projection: { _id: 0 } }).toArray();
+    try {
+      const mongoList = await mdb.collection('attempts').find({}, { projection: { _id: 0 } }).toArray();
+      let localUpdated = false;
+
+      // Sync offline records into MongoDB
+      for (const localRecord of db) {
+        const inMongo = mongoList.some(m => m.id === localRecord.id);
+        if (!inMongo) {
+          const copy = { ...localRecord };
+          delete copy._id;
+          await mdb.collection('attempts').updateOne({ id: localRecord.id }, { $set: copy }, { upsert: true }).catch(() => {});
+          mongoList.push(localRecord);
+        }
+      }
+
+      // Sync any MongoDB records into local file
+      for (const mDoc of mongoList) {
+        if (!localMap.has(mDoc.id)) {
+          db.push(mDoc);
+          localUpdated = true;
+        }
+      }
+
+      if (localUpdated) {
+        await saveDb();
+      }
+
+      return mongoList;
+    } catch (err) {
+      console.warn('Notice: MongoDB offline or unreachable, serving from local file storage.');
+    }
   }
-  return [...memDb];
+  return [...db];
 }
 
 async function deleteAttempt(id) {
+  let deleted = false;
   const mdb = await getMongoDb();
   if (mdb) {
-    const res = await mdb.collection('attempts').deleteOne({ id });
-    return res.deletedCount > 0;
+    try {
+      const res = await mdb.collection('attempts').deleteOne({ id });
+      if (res.deletedCount > 0) deleted = true;
+    } catch (e) {}
   }
-  const index = memDb.findIndex(record => record.id === id);
-  if (index === -1) return false;
-  memDb.splice(index, 1);
-  return true;
+  loadDb();
+  const index = db.findIndex(record => record.id === id);
+  if (index !== -1) {
+    db.splice(index, 1);
+    await saveDb();
+    deleted = true;
+  }
+  return deleted;
 }
 
 async function deleteAllAttempts() {
   const mdb = await getMongoDb();
   if (mdb) {
-    await mdb.collection('attempts').deleteMany({});
+    try {
+      await mdb.collection('attempts').deleteMany({});
+    } catch (e) {}
   }
-  memDb.length = 0;
+  loadDb();
+  db.length = 0;
+  await saveDb();
 }
 
 // Utility functions
@@ -518,9 +630,12 @@ const server = http.createServer(requestListener);
 
 // If run directly: node server.js
 if (require.main === module) {
+  loadDb();
   server.listen(PORT, HOST, () => {
     console.log(`HCCDA-AI test running at http://localhost:${PORT} (network: http://YOUR-IP:${PORT})`);
   });
+} else {
+  loadDb();
 }
 
 module.exports = requestListener;
