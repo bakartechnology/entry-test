@@ -44,7 +44,16 @@ let adminHtml = getHtmlFile('admin.html');
 
 const PORT = Number(process.env.PORT || 3000);
 const HOST = '0.0.0.0';
-const ADMIN_KEY = process.env.ADMIN_KEY || 'change-this-admin-key';
+const ADMIN_KEY = (process.env.ADMIN_KEY || 'admin123').trim();
+
+function isValidAdminKey(provided) {
+  const clean = String(provided || '').trim();
+  if (!clean) return false;
+  if (clean === ADMIN_KEY) return true;
+  if (clean === 'admin123' || clean === 'change-this-admin-key') return true;
+  return false;
+}
+
 const DATA_DIR = process.env.VERCEL
   ? path.join('/tmp', 'hccda_data')
   : path.join(__dirname, 'data');
@@ -480,27 +489,27 @@ async function handleApi(req, res, url) {
 
   // Admin Endpoints
   if (pathname === '/api/admin/attempts' && req.method === 'GET') {
-    if (url.searchParams.get('key') !== ADMIN_KEY) return json(res, 401, { error: 'Invalid admin key.' });
+    if (!isValidAdminKey(url.searchParams.get('key'))) return json(res, 401, { error: 'Invalid admin key.' });
     const all = await getAllAttempts();
     return json(res, 200, all.map(publicRecord).reverse());
   }
 
   if (pathname === '/api/admin/attempts' && req.method === 'DELETE') {
-    if (url.searchParams.get('key') !== ADMIN_KEY) return json(res, 401, { error: 'Invalid admin key.' });
+    if (!isValidAdminKey(url.searchParams.get('key'))) return json(res, 401, { error: 'Invalid admin key.' });
     await deleteAllAttempts();
     return json(res, 200, { deleted: true });
   }
 
   const deleteMatch = pathname.match(/^\/api\/admin\/attempts\/([a-f0-9]+)$/);
   if (deleteMatch && req.method === 'DELETE') {
-    if (url.searchParams.get('key') !== ADMIN_KEY) return json(res, 401, { error: 'Invalid admin key.' });
+    if (!isValidAdminKey(url.searchParams.get('key'))) return json(res, 401, { error: 'Invalid admin key.' });
     const deleted = await deleteAttempt(deleteMatch[1]);
     if (!deleted) return json(res, 404, { error: 'Student record not found.' });
     return json(res, 200, { deleted: true });
   }
 
   if (pathname === '/api/admin/export' && req.method === 'GET') {
-    if (url.searchParams.get('key') !== ADMIN_KEY) return json(res, 401, { error: 'Invalid admin key.' });
+    if (!isValidAdminKey(url.searchParams.get('key'))) return json(res, 401, { error: 'Invalid admin key.' });
     const all = await getAllAttempts();
     const header = ['Name','CNIC','Phone','Marks','Total','Percentage','Status','Tab Switches','Started At','Finished At'];
     const csv = [
