@@ -370,16 +370,23 @@ async function handleApi(req, res, url) {
     return res.end();
   }
 
-  // Normalize path if rewritten without /api prefix
-  let pathname = url.pathname;
+  // Extract original requested path from Vercel rewrite or headers
+  let pathname = (
+    url.searchParams.get('__origpath') ||
+    req.headers['x-matched-path'] ||
+    req.headers['x-forwarded-uri'] ||
+    url.pathname
+  ).split('?')[0];
+
+  // If path was rewritten without /api prefix
   if (!pathname.startsWith('/api/') && pathname !== '/api') {
     if (pathname.startsWith('/attempts') || pathname.startsWith('/admin/')) {
       pathname = '/api' + pathname;
     }
   }
 
-  // Health / Info endpoint for /api or /api/
-  if (pathname === '/api' || pathname === '/api/') {
+  // Health / Info endpoint for /api, /api/, or /api/index.js
+  if (pathname === '/api' || pathname === '/api/' || pathname === '/api/index.js') {
     return json(res, 200, {
       status: 'online',
       name: 'HCCDA-AI Admission Test API',
@@ -550,7 +557,7 @@ const requestListener = async (req, res) => {
   }
 
   // Handle API routes
-  if (url.pathname === '/api' || url.pathname.startsWith('/api/') || url.pathname.startsWith('/attempts')) {
+  if (url.searchParams.has('__origpath') || url.pathname === '/api' || url.pathname.startsWith('/api/') || url.pathname.startsWith('/attempts')) {
     try {
       return await handleApi(req, res, url);
     } catch (error) {
