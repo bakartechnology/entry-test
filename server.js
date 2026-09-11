@@ -23,6 +23,25 @@ if (fs.existsSync(envPath)) {
   }
 }
 
+// Pre-load HTML pages into memory for zero-latency serving and NFT bundling in Vercel
+function getHtmlFile(name) {
+  const candidates = [
+    path.join(__dirname, name),
+    path.join(__dirname, 'public', name),
+    path.join(process.cwd(), name),
+    path.join(process.cwd(), 'public', name)
+  ];
+  for (const p of candidates) {
+    try {
+      if (fs.existsSync(p) && fs.statSync(p).isFile()) return fs.readFileSync(p, 'utf8');
+    } catch (_) {}
+  }
+  return '';
+}
+
+let indexHtml = getHtmlFile('index.html');
+let adminHtml = getHtmlFile('admin.html');
+
 const PORT = Number(process.env.PORT || 3000);
 const HOST = '0.0.0.0';
 const ADMIN_KEY = process.env.ADMIN_KEY || 'change-this-admin-key';
@@ -85,13 +104,18 @@ let cachedDb = null;
 async function getMongoDb() {
   const uri = process.env.MONGODB_URI;
   if (!uri) return null;
+  // If running on Vercel serverless, prevent localhost connection timeouts
+  if (process.env.VERCEL && (uri.includes('localhost') || uri.includes('127.0.0.1'))) {
+    console.warn('Skipping MongoDB: localhost cannot be reached from Vercel serverless. Use MongoDB Atlas connection string for persistent cloud database.');
+    return null;
+  }
   if (cachedDb) return cachedDb;
   try {
     const { MongoClient } = require('mongodb');
     if (!cachedClient) {
       cachedClient = new MongoClient(uri, {
         maxPoolSize: 10,
-        serverSelectionTimeoutMS: 5000,
+        serverSelectionTimeoutMS: 4000,
       });
       await cachedClient.connect();
     }
@@ -99,6 +123,7 @@ async function getMongoDb() {
     return cachedDb;
   } catch (err) {
     console.error('MongoDB connection error:', err.message);
+    cachedClient = null;
     return null;
   }
 }
@@ -106,7 +131,23 @@ async function getMongoDb() {
 function ensureDb() {
   try {
     fs.mkdirSync(DATA_DIR, { recursive: true });
-    if (!fs.existsSync(DB_FILE)) fs.writeFileSync(DB_FILE, '[]');
+    if (!fs.existsSync(DB_FILE)) {
+      const seedCandidates = [
+        path.join(__dirname, 'data', 'attempts.json'),
+        path.join(process.cwd(), 'data', 'attempts.json')
+      ];
+      let seeded = false;
+      for (const s of seedCandidates) {
+        if (fs.existsSync(s)) {
+          try {
+            fs.copyFileSync(s, DB_FILE);
+            seeded = true;
+            break;
+          } catch (_) {}
+        }
+      }
+      if (!seeded) fs.writeFileSync(DB_FILE, '[]');
+    }
   } catch (e) {
     console.warn('Could not ensure local data directory:', e.message);
   }
@@ -155,19 +196,30 @@ function saveDb() {
 async function getAttempt(id) {
   const mdb = await getMongoDb();
   if (mdb) {
-    return await mdb.collection('attempts').findOne({ id }, { projection: { _id: 0 } });
+    try {
+      const doc = await mdb.collection('attempts').findOne({ id }, { projection: { _id: 0 } });
+      if (doc) return doc;
+    } catch (e) {
+      console.error('MongoDB getAttempt error, checking local store:', e.message);
+    }
   }
+  loadDb();
   return db.find(record => record.id === id) || null;
 }
 
 async function saveAttempt(record) {
   const mdb = await getMongoDb();
   if (mdb) {
-    const copy = { ...record };
-    delete copy._id;
-    await mdb.collection('attempts').updateOne({ id: record.id }, { $set: copy }, { upsert: true });
-    return;
+    try {
+      const copy = { ...record };
+      delete copy._id;
+      await mdb.collection('attempts').updateOne({ id: record.id }, { $set: copy }, { upsert: true });
+      return;
+    } catch (e) {
+      console.error('MongoDB saveAttempt error, saving locally as backup:', e.message);
+    }
   }
+  loadDb();
   const idx = db.findIndex(r => r.id === record.id);
   if (idx >= 0) {
     db[idx] = record;
@@ -180,17 +232,27 @@ async function saveAttempt(record) {
 async function getAllAttempts() {
   const mdb = await getMongoDb();
   if (mdb) {
-    return await mdb.collection('attempts').find({}, { projection: { _id: 0 } }).toArray();
+    try {
+      return await mdb.collection('attempts').find({}, { projection: { _id: 0 } }).toArray();
+    } catch (e) {
+      console.error('MongoDB getAllAttempts error, checking local store:', e.message);
+    }
   }
+  loadDb();
   return [...db];
 }
 
 async function deleteAttempt(id) {
   const mdb = await getMongoDb();
   if (mdb) {
-    const res = await mdb.collection('attempts').deleteOne({ id });
-    return res.deletedCount > 0;
+    try {
+      const res = await mdb.collection('attempts').deleteOne({ id });
+      if (res.deletedCount > 0) return true;
+    } catch (e) {
+      console.error('MongoDB deleteAttempt error:', e.message);
+    }
   }
+  loadDb();
   const index = db.findIndex(record => record.id === id);
   if (index === -1) return false;
   db.splice(index, 1);
@@ -201,8 +263,12 @@ async function deleteAttempt(id) {
 async function deleteAllAttempts() {
   const mdb = await getMongoDb();
   if (mdb) {
-    await mdb.collection('attempts').deleteMany({});
-    return;
+    try {
+      await mdb.collection('attempts').deleteMany({});
+      return;
+    } catch (e) {
+      console.error('MongoDB deleteAllAttempts error:', e.message);
+    }
   }
   db.length = 0;
   await saveDb();
@@ -295,8 +361,28 @@ async function handleApi(req, res, url) {
     return res.end();
   }
 
+  // Normalize path if rewritten without /api prefix
+  let pathname = url.pathname;
+  if (!pathname.startsWith('/api/') && pathname !== '/api') {
+    if (pathname.startsWith('/attempts') || pathname.startsWith('/admin/')) {
+      pathname = '/api' + pathname;
+    }
+  }
+
+  // Health / Info endpoint for /api or /api/
+  if (pathname === '/api' || pathname === '/api/') {
+    return json(res, 200, {
+      status: 'online',
+      name: 'HCCDA-AI Admission Test API',
+      version: '1.0.0',
+      description: 'Online student assessment API running on Vercel',
+      studentPortal: '/',
+      adminPortal: '/admin'
+    });
+  }
+
   // Create new test attempt
-  if (req.method === 'POST' && url.pathname === '/api/attempts') {
+  if (req.method === 'POST' && pathname === '/api/attempts') {
     const input = await body(req);
     const name = sanitize(input.name), cnic = sanitize(input.cnic, 30), phone = sanitize(input.phone, 30);
     if (!name || !cnic || !phone) return json(res, 400, { error: 'Name, CNIC, and phone number are required.' });
@@ -318,7 +404,7 @@ async function handleApi(req, res, url) {
   }
 
   // Attempt actions
-  const attemptMatch = url.pathname.match(/^\/api\/attempts\/([a-f0-9]+)(?:\/(answer|tab-switch|submit|review))?$/);
+  const attemptMatch = pathname.match(/^\/api\/attempts\/([a-f0-9]+)(?:\/(answer|tab-switch|submit|review))?$/);
   if (attemptMatch) {
     const [, attemptId, action] = attemptMatch;
     const record = await getAttempt(attemptId);
@@ -393,19 +479,19 @@ async function handleApi(req, res, url) {
   }
 
   // Admin Endpoints
-  if (url.pathname === '/api/admin/attempts' && req.method === 'GET') {
+  if (pathname === '/api/admin/attempts' && req.method === 'GET') {
     if (url.searchParams.get('key') !== ADMIN_KEY) return json(res, 401, { error: 'Invalid admin key.' });
     const all = await getAllAttempts();
     return json(res, 200, all.map(publicRecord).reverse());
   }
 
-  if (url.pathname === '/api/admin/attempts' && req.method === 'DELETE') {
+  if (pathname === '/api/admin/attempts' && req.method === 'DELETE') {
     if (url.searchParams.get('key') !== ADMIN_KEY) return json(res, 401, { error: 'Invalid admin key.' });
     await deleteAllAttempts();
     return json(res, 200, { deleted: true });
   }
 
-  const deleteMatch = url.pathname.match(/^\/api\/admin\/attempts\/([a-f0-9]+)$/);
+  const deleteMatch = pathname.match(/^\/api\/admin\/attempts\/([a-f0-9]+)$/);
   if (deleteMatch && req.method === 'DELETE') {
     if (url.searchParams.get('key') !== ADMIN_KEY) return json(res, 401, { error: 'Invalid admin key.' });
     const deleted = await deleteAttempt(deleteMatch[1]);
@@ -413,7 +499,7 @@ async function handleApi(req, res, url) {
     return json(res, 200, { deleted: true });
   }
 
-  if (url.pathname === '/api/admin/export' && req.method === 'GET') {
+  if (pathname === '/api/admin/export' && req.method === 'GET') {
     if (url.searchParams.get('key') !== ADMIN_KEY) return json(res, 401, { error: 'Invalid admin key.' });
     const all = await getAllAttempts();
     const header = ['Name','CNIC','Phone','Marks','Total','Percentage','Status','Tab Switches','Started At','Finished At'];
@@ -447,23 +533,58 @@ async function handleApi(req, res, url) {
 // ----------------------------------------------------
 const requestListener = async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
-  try {
-    if (url.pathname.startsWith('/api/')) {
+
+  // Favicon ignore
+  if (url.pathname === '/favicon.ico') {
+    res.writeHead(204);
+    return res.end();
+  }
+
+  // Handle API routes
+  if (url.pathname === '/api' || url.pathname.startsWith('/api/') || url.pathname.startsWith('/attempts')) {
+    try {
       return await handleApi(req, res, url);
+    } catch (error) {
+      return json(res, 500, { error: error.message });
     }
-  } catch (error) {
-    return json(res, 500, { error: error.message });
   }
 
   if (req.method !== 'GET') return json(res, 405, { error: 'Method not allowed.' });
 
-  const requested = url.pathname === '/admin' ? 'admin.html' : url.pathname === '/' ? 'index.html' : url.pathname.slice(1);
-  const file = path.join(__dirname, requested);
-  if (!file.startsWith(__dirname) || !fs.existsSync(file)) return json(res, 404, { error: 'Page not found.' });
+  // Student Test Portal
+  if (url.pathname === '/' || url.pathname === '/index.html') {
+    if (!indexHtml) indexHtml = getHtmlFile('index.html');
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    return res.end(indexHtml);
+  }
 
-  const types = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript' };
-  res.writeHead(200, { 'Content-Type': types[path.extname(file)] || 'application/octet-stream' });
-  fs.createReadStream(file).pipe(res);
+  // Admin Dashboard
+  if (url.pathname === '/admin' || url.pathname === '/admin.html') {
+    if (!adminHtml) adminHtml = getHtmlFile('admin.html');
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    return res.end(adminHtml);
+  }
+
+  // Fallback for any other static files
+  const requested = url.pathname.slice(1);
+  const candidates = [
+    path.join(__dirname, requested),
+    path.join(__dirname, 'public', requested),
+    path.join(process.cwd(), requested),
+    path.join(process.cwd(), 'public', requested)
+  ];
+  for (const file of candidates) {
+    try {
+      if (fs.existsSync(file) && fs.statSync(file).isFile()) {
+        const types = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript', '.json': 'application/json' };
+        const content = await fs.promises.readFile(file);
+        res.writeHead(200, { 'Content-Type': types[path.extname(file)] || 'application/octet-stream' });
+        return res.end(content);
+      }
+    } catch (_) {}
+  }
+
+  return json(res, 404, { error: 'Page not found.' });
 };
 
 const server = http.createServer(requestListener);
