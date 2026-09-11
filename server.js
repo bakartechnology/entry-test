@@ -54,10 +54,6 @@ function isValidAdminKey(provided) {
   return false;
 }
 
-const DATA_DIR = process.env.VERCEL
-  ? path.join('/tmp', 'hccda_data')
-  : path.join(__dirname, 'data');
-const DB_FILE = path.join(DATA_DIR, 'attempts.json');
 const MAX_TAB_SWITCHES = 3;
 const TEST_MINUTES = 45;
 
@@ -107,15 +103,20 @@ const questions = [
 // ----------------------------------------------------
 // STORAGE LAYER (Hybrid: MongoDB Atlas or File Storage)
 // ----------------------------------------------------
+// STORAGE LAYER (Direct MongoDB - No File Storage)
+// ----------------------------------------------------
 let cachedClient = null;
 let cachedDb = null;
 
 async function getMongoDb() {
   const uri = process.env.MONGODB_URI;
-  if (!uri) return null;
-  // If running on Vercel serverless, prevent localhost connection timeouts
+  if (!uri) {
+    console.warn('Notice: MONGODB_URI environment variable is not set.');
+    return null;
+  }
+  // Prevent localhost connection timeouts on Vercel cloud serverless
   if (process.env.VERCEL && (uri.includes('localhost') || uri.includes('127.0.0.1'))) {
-    console.warn('Skipping MongoDB: localhost cannot be reached from Vercel serverless. Use MongoDB Atlas connection string for persistent cloud database.');
+    console.warn('Notice: localhost MongoDB cannot be reached from Vercel cloud. Please add your MongoDB Atlas URI in Vercel Environment Variables.');
     return null;
   }
   if (cachedDb) return cachedDb;
@@ -124,7 +125,7 @@ async function getMongoDb() {
     if (!cachedClient) {
       cachedClient = new MongoClient(uri, {
         maxPoolSize: 10,
-        serverSelectionTimeoutMS: 4000,
+        serverSelectionTimeoutMS: 5000,
       });
       await cachedClient.connect();
     }
@@ -137,150 +138,60 @@ async function getMongoDb() {
   }
 }
 
-function ensureDb() {
-  try {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-    if (!fs.existsSync(DB_FILE)) {
-      const seedCandidates = [
-        path.join(__dirname, 'data', 'attempts.json'),
-        path.join(process.cwd(), 'data', 'attempts.json')
-      ];
-      let seeded = false;
-      for (const s of seedCandidates) {
-        if (fs.existsSync(s)) {
-          try {
-            fs.copyFileSync(s, DB_FILE);
-            seeded = true;
-            break;
-          } catch (_) {}
-        }
-      }
-      if (!seeded) fs.writeFileSync(DB_FILE, '[]');
-    }
-  } catch (e) {
-    console.warn('Could not ensure local data directory:', e.message);
-  }
-}
+// In-memory array (used strictly as temporary fallback if MongoDB is not connected - NO files)
+const memDb = [];
 
-let db = [];
-function loadDb() {
-  ensureDb();
-  try {
-    if (fs.existsSync(DB_FILE)) {
-      const parsed = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
-      db = Array.isArray(parsed) ? parsed.filter(r => r && typeof r === 'object' && !Array.isArray(r)) : [];
-    }
-  } catch {
-    db = [];
-  }
-}
-
-let writeChain = Promise.resolve();
-let tmpCounter = 0;
-function saveDb() {
-  writeChain = writeChain.then(async () => {
-    try {
-      ensureDb();
-      const tmp = DB_FILE + '.' + process.pid + '.' + (tmpCounter++) + '.tmp';
-      const payload = JSON.stringify(db);
-      for (let attempt = 0; attempt < 5; attempt++) {
-        try {
-          await fs.promises.writeFile(tmp, payload);
-          await fs.promises.rename(tmp, DB_FILE);
-          return;
-        } catch (error) {
-          await fs.promises.rm(tmp, { force: true }).catch(() => {});
-          if (attempt === 4) { await fs.promises.writeFile(DB_FILE, payload); return; }
-          await new Promise(resolve => setTimeout(resolve, 60 * (attempt + 1)));
-        }
-      }
-    } catch (e) {
-      console.warn('Failed to save to local file:', e.message);
-    }
-  }).catch(() => {});
-  return writeChain;
-}
-
-// Unified Async Storage Helpers
+// Unified Async Storage Helpers (Direct MongoDB)
 async function getAttempt(id) {
   const mdb = await getMongoDb();
   if (mdb) {
-    try {
-      const doc = await mdb.collection('attempts').findOne({ id }, { projection: { _id: 0 } });
-      if (doc) return doc;
-    } catch (e) {
-      console.error('MongoDB getAttempt error, checking local store:', e.message);
-    }
+    return await mdb.collection('attempts').findOne({ id }, { projection: { _id: 0 } });
   }
-  loadDb();
-  return db.find(record => record.id === id) || null;
+  return memDb.find(record => record.id === id) || null;
 }
 
 async function saveAttempt(record) {
   const mdb = await getMongoDb();
   if (mdb) {
-    try {
-      const copy = { ...record };
-      delete copy._id;
-      await mdb.collection('attempts').updateOne({ id: record.id }, { $set: copy }, { upsert: true });
-      return;
-    } catch (e) {
-      console.error('MongoDB saveAttempt error, saving locally as backup:', e.message);
-    }
+    const copy = { ...record };
+    delete copy._id;
+    await mdb.collection('attempts').updateOne({ id: record.id }, { $set: copy }, { upsert: true });
+    return;
   }
-  loadDb();
-  const idx = db.findIndex(r => r.id === record.id);
+  const idx = memDb.findIndex(r => r.id === record.id);
   if (idx >= 0) {
-    db[idx] = record;
+    memDb[idx] = record;
   } else {
-    db.push(record);
+    memDb.push(record);
   }
-  await saveDb();
 }
 
 async function getAllAttempts() {
   const mdb = await getMongoDb();
   if (mdb) {
-    try {
-      return await mdb.collection('attempts').find({}, { projection: { _id: 0 } }).toArray();
-    } catch (e) {
-      console.error('MongoDB getAllAttempts error, checking local store:', e.message);
-    }
+    return await mdb.collection('attempts').find({}, { projection: { _id: 0 } }).toArray();
   }
-  loadDb();
-  return [...db];
+  return [...memDb];
 }
 
 async function deleteAttempt(id) {
   const mdb = await getMongoDb();
   if (mdb) {
-    try {
-      const res = await mdb.collection('attempts').deleteOne({ id });
-      if (res.deletedCount > 0) return true;
-    } catch (e) {
-      console.error('MongoDB deleteAttempt error:', e.message);
-    }
+    const res = await mdb.collection('attempts').deleteOne({ id });
+    return res.deletedCount > 0;
   }
-  loadDb();
-  const index = db.findIndex(record => record.id === id);
+  const index = memDb.findIndex(record => record.id === id);
   if (index === -1) return false;
-  db.splice(index, 1);
-  await saveDb();
+  memDb.splice(index, 1);
   return true;
 }
 
 async function deleteAllAttempts() {
   const mdb = await getMongoDb();
   if (mdb) {
-    try {
-      await mdb.collection('attempts').deleteMany({});
-      return;
-    } catch (e) {
-      console.error('MongoDB deleteAllAttempts error:', e.message);
-    }
+    await mdb.collection('attempts').deleteMany({});
   }
-  db.length = 0;
-  await saveDb();
+  memDb.length = 0;
 }
 
 // Utility functions
@@ -607,12 +518,9 @@ const server = http.createServer(requestListener);
 
 // If run directly: node server.js
 if (require.main === module) {
-  loadDb();
   server.listen(PORT, HOST, () => {
     console.log(`HCCDA-AI test running at http://localhost:${PORT} (network: http://YOUR-IP:${PORT})`);
   });
-} else {
-  loadDb();
 }
 
 module.exports = requestListener;
