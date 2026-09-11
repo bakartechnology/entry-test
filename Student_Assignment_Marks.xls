@@ -1,0 +1,159 @@
+<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+ <Styles>
+  <Style ss:ID="Default" ss:Name="Normal">
+   <Alignment ss:Vertical="Center"/>
+   <Font ss:FontName="Calibri" ss:Size="11" ss:Color="#102A43"/>
+  </Style>
+  <Style ss:ID="title">
+   <Font ss:FontName="Calibri" ss:Size="16" ss:Bold="1" ss:Color="#087F8C"/>
+   <Alignment ss:Vertical="Center"/>
+  </Style>
+  <Style ss:ID="header">
+   <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1" ss:Color="#FFFFFF"/>
+   <Interior ss:Color="#087F8C" ss:Pattern="Solid"/>
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#05616B"/>
+   </Borders>
+  </Style>
+  <Style ss:ID="name">
+   <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#D9E2EC"/>
+   </Borders>
+  </Style>
+  <Style ss:ID="mark">
+   <Alignment ss:Horizontal="Center"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#D9E2EC"/>
+   </Borders>
+  </Style>
+  <Style ss:ID="total">
+   <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1" ss:Color="#05616B"/>
+   <Alignment ss:Horizontal="Center"/>
+   <Interior ss:Color="#E8F5F4" ss:Pattern="Solid"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#D9E2EC"/>
+   </Borders>
+  </Style>
+  <Style ss:ID="percent">
+   <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1" ss:Color="#237A57"/>
+   <Alignment ss:Horizontal="Center"/>
+   <NumberFormat ss:Format="0.00%"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#D9E2EC"/>
+   </Borders>
+  </Style>
+ </Styles>
+ <Worksheet ss:Name="Assignment Marks">
+  <Table ss:DefaultRowHeight="18">
+   <Column ss:Width="130"/>
+   <Column ss:Width="72" ss:Span="8"/>
+   <Column ss:Index="11" ss:Width="86"/>
+   <Column ss:Width="86"/>
+   <Row ss:Height="26">
+    <Cell ss:StyleID="title"><Data ss:Type="String">Student Assignment Marks Record</Data></Cell>
+   </Row>
+   <Row ss:Height="18">
+    <Cell><Data ss:Type="String">Each assignment carries 100 marks. Total marks: 900.</Data></Cell>
+   </Row>
+   <Row/>
+   <Row ss:Height="32">
+    <Cell ss:StyleID="header"><Data ss:Type="String">Student Name</Data></Cell>
+    <Cell ss:StyleID="header"><Data ss:Type="String">Assignment 1</Data></Cell>
+    <Cell ss:StyleID="header"><Data ss:Type="String">Assignment 2</Data></Cell>
+    <Cell ss:StyleID="header"><Data ss:Type="String">Assignment 3</Data></Cell>
+    <Cell ss:StyleID="header"><Data ss:Type="String">Assignment 4</Data></Cell>
+    <Cell ss:StyleID="header"><Data ss:Type="String">Assignment 5</Data></Cell>
+    <Cell ss:StyleID="header"><Data ss:Type="String">Assignment 6</Data></Cell>
+    <Cell ss:StyleID="header"><Data ss:Type="String">Assignment 7</Data></Cell>
+    <Cell ss:StyleID="header"><Data ss:Type="String">Assignment 8</Data></Cell>
+    <Cell ss:StyleID="header"><Data ss:Type="String">Assignment 9</Data></Cell>
+    <Cell ss:StyleID="header"><Data ss:Type="String">Total (900)</Data></Cell>
+    <Cell ss:StyleID="header"><Data ss:Type="String">Percentage</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="name"><Data ss:Type="String">Ahad</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">93</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">91</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">95</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">92</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">94</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">93</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">91</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">95</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">92</Data></Cell>
+    <Cell ss:StyleID="total" ss:Formula="=SUM(RC[-9]:RC[-1])"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="percent" ss:Formula="=RC[-1]/900"><Data ss:Type="Number">0</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="name"><Data ss:Type="String">Araiz</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">92</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">94</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">91</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">95</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">93</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">92</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">94</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">91</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">95</Data></Cell>
+    <Cell ss:StyleID="total" ss:Formula="=SUM(RC[-9]:RC[-1])"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="percent" ss:Formula="=RC[-1]/900"><Data ss:Type="Number">0</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="name"><Data ss:Type="String">Abubakar</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">95</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">93</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">94</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">91</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">92</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">95</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">93</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">94</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">91</Data></Cell>
+    <Cell ss:StyleID="total" ss:Formula="=SUM(RC[-9]:RC[-1])"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="percent" ss:Formula="=RC[-1]/900"><Data ss:Type="Number">0</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="name"><Data ss:Type="String">Shahzaman</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">91</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">95</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">92</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">94</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">95</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">91</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">92</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">93</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">94</Data></Cell>
+    <Cell ss:StyleID="total" ss:Formula="=SUM(RC[-9]:RC[-1])"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="percent" ss:Formula="=RC[-1]/900"><Data ss:Type="Number">0</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="name"><Data ss:Type="String">Kaif</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">94</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">92</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">93</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">95</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">91</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">94</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">95</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">92</Data></Cell>
+    <Cell ss:StyleID="mark"><Data ss:Type="Number">93</Data></Cell>
+    <Cell ss:StyleID="total" ss:Formula="=SUM(RC[-9]:RC[-1])"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="percent" ss:Formula="=RC[-1]/900"><Data ss:Type="Number">0</Data></Cell>
+   </Row>
+  </Table>
+  <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+   <FreezePanes/>
+   <FrozenNoSplit/>
+   <SplitHorizontal>4</SplitHorizontal>
+   <TopRowBottomPane>4</TopRowBottomPane>
+   <ActivePane>2</ActivePane>
+  </WorksheetOptions>
+ </Worksheet>
+</Workbook>

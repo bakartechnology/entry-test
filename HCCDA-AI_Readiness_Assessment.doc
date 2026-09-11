@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>HCCDA-AI Readiness Assessment</title>
+<style>
+@page { size: A4; margin: 0.7in; }
+body { font-family: Arial, sans-serif; color: #102a43; font-size: 11pt; line-height: 1.35; }
+h1 { color: #087f8c; font-size: 25pt; margin-bottom: 4pt; }
+h2 { color: #102a43; border-bottom: 2px solid #e76f51; padding-bottom: 4pt; margin-top: 22pt; }
+h3 { margin-bottom: 2pt; }
+.subtitle { color: #52606d; font-size: 12pt; }
+.meta { border: 1px solid #bcccdc; padding: 10pt; margin: 16pt 0; }
+.instructions { background: #e8f5f4; padding: 10pt; }
+.question { margin: 13pt 0; page-break-inside: avoid; }
+.question strong { color: #087f8c; }
+.options { margin: 5pt 0 0 18pt; }
+.answer-space { color: #52606d; letter-spacing: 2pt; }
+table { border-collapse: collapse; width: 100%; margin-top: 10pt; }
+th, td { border: 1px solid #bcccdc; padding: 6pt; text-align: left; }
+th { background: #e8f5f4; }
+.small { color: #52606d; font-size: 9pt; }
+.key { page-break-before: always; }
+</style>
+</head>
+<body>
+<h1>HCCDA-AI Readiness Assessment</h1>
+<div class="subtitle">BSCS entry screening test for HCCDA-AI admission</div>
+
+<div class="meta">
+<b>Candidate name:</b> _______________________________________________<br><br>
+<b>Student ID / application number:</b> _______________________________<br><br>
+<b>Date:</b> ____________________ &nbsp;&nbsp;&nbsp; <b>Time started:</b> __________ &nbsp;&nbsp;&nbsp; <b>Time finished:</b> __________
+</div>
+
+<div class="instructions">
+<b>Instructions</b><br>
+1. Answer all 20 multiple-choice questions. Select one best answer for each question.<br>
+2. Recommended time: 45 minutes. Do not use outside help during the assessment.<br>
+3. Each question carries 1 mark. Maximum score: 40 marks.<br>
+4. Suggested readiness benchmark: at least 14/20 overall (70%) and at least 3/5 in Logic &amp; Programming (50%).<br>
+5. This assessment is a readiness indicator and should be considered with the complete admission process.
+</div>
+
+<h2>Section A: Questions</h2>
+
+<div class="question"><b>1. [Logic &amp; programming]</b> A function repeatedly halves n until n becomes 1. Ignoring constants, what is its time complexity?
+<div class="options">A. O(1)<br>B. O(log n)<br>C. O(n)<br>D. O(n log n)</div><div class="answer-space">Answer: ______</div></div>
+
+<div class="question"><b>2. [Logic &amp; programming]</b> What is printed by this pseudocode? x = 0; for i = 1 to 4: x = x + i; print(x)
+<div class="options">A. 4<br>B. 6<br>C. 10<br>D. 16</div><div class="answer-space">Answer: ______</div></div>
+
+<div class="question"><b>3. [Logic &amp; programming]</b> A queue receives A, B, C in that order. Two items are removed, then D is added. What is removed next?
+<div class="options">A. A<br>B. B<br>C. C<br>D. D</div><div class="answer-space">Answer: ______</div></div>
+
+<div class="question"><b>4. [Logic &amp; programming]</b> Which condition is necessary for binary search to work correctly on an array?
+<div class="options">A. The array contains only integers<br>B. The array is sorted<br>C. The array has no duplicates<br>D. The array length is even</div><div class="answer-space">Answer: ______</div></div>
+
+<div class="question"><b>5. [Logic &amp; programming]</b> An algorithm returns the first repeated value in [4, 2, 7, 2, 9, 4]. Which value should it return if it scans from left to right?
+<div class="options">A. 2<br>B. 4<br>C. 7<br>D. 9</div><div class="answer-space">Answer: ______</div></div>
+
+<div class="question"><b>6. [Data structures &amp; algorithms]</b> Which data structure is most suitable for checking whether brackets are properly nested?
+<div class="options">A. Stack<br>B. Queue<br>C. Graph<br>D. Hash table only</div><div class="answer-space">Answer: ______</div></div>
+
+<div class="question"><b>7. [Data structures &amp; algorithms]</b> A binary search tree has values 8, 3, 10, 1, 6. Which traversal lists the values in ascending order?
+<div class="options">A. Preorder<br>B. Postorder<br>C. Inorder<br>D. Level order</div><div class="answer-space">Answer: ______</div></div>
+
+<div class="question"><b>8. [Data structures &amp; algorithms]</b> If an array is already sorted, which common sorting algorithm can finish in O(n) time in its best case?
+<div class="options">A. Insertion sort<br>B. Selection sort<br>C. Heap sort<br>D. Merge sort</div><div class="answer-space">Answer: ______</div></div>
+
+<div class="question"><b>9. [Databases]</b> A table stores StudentID, StudentName, and DepartmentName. DepartmentName depends only on DepartmentID, not StudentID. What issue is present?
+<div class="options">A. Recursion<br>B. Partial or transitive dependency<br>C. Deadlock<br>D. Packet loss</div><div class="answer-space">Answer: ______</div></div>
+
+<div class="question"><b>10. [Databases]</b> Which SQL clause filters groups after aggregate functions such as COUNT are calculated?
+<div class="options">A. WHERE<br>B. ORDER BY<br>C. HAVING<br>D. JOIN</div><div class="answer-space">Answer: ______</div></div>
+
+<div class="question"><b>11. [Operating systems]</b> Three processes each hold one resource and wait for another held by the next process. What is this situation called?
+<div class="options">A. Paging<br>B. Deadlock<br>C. Context switching<br>D. Thrashing</div><div class="answer-space">Answer: ______</div></div>
+
+<div class="question"><b>12. [Operating systems]</b> What is the main purpose of virtual memory?
+<div class="options">A. To make the CPU clock faster<br>B. To allow programs to use an address space larger than physical RAM<br>C. To permanently store backups<br>D. To encrypt every process</div><div class="answer-space">Answer: ______</div></div>
+
+<div class="question"><b>13. [Computer networks]</b> A browser requests a webpage using HTTPS. Which property does TLS primarily add compared with plain HTTP?
+<div class="options">A. Compression only<br>B. Confidentiality and server authentication<br>C. A larger IP address<br>D. Faster DNS lookup</div><div class="answer-space">Answer: ______</div></div>
+
+<div class="question"><b>14. [Computer networks]</b> Which device forwards packets between different IP networks?
+<div class="options">A. Hub<br>B. Router<br>C. Keyboard<br>D. Repeater</div><div class="answer-space">Answer: ______</div></div>
+
+<div class="question"><b>15. [Software engineering]</b> A team writes an automated test before implementing the function it tests. Which practice is this?
+<div class="options">A. Test-driven development<br>B. Code obfuscation<br>C. Big-bang integration<br>D. Pair deployment</div><div class="answer-space">Answer: ______</div></div>
+
+<div class="question"><b>16. [Software engineering]</b> Which requirement is most measurable and testable?
+<div class="options">A. The app should feel modern<br>B. The system should be easy to use<br>C. The report must load within 2 seconds for 95% of requests<br>D. The design should be beautiful</div><div class="answer-space">Answer: ______</div></div>
+
+<div class="question"><b>17. [Discrete math &amp; statistics]</b> A fair coin is tossed twice. What is the probability of getting exactly one head?
+<div class="options">A. 1/4<br>B. 1/2<br>C. 2/3<br>D. 3/4</div><div class="answer-space">Answer: ______</div></div>
+
+<div class="question"><b>18. [Discrete math &amp; statistics]</b> If P(A) = 0.6, P(B) = 0.5, and A and B are independent, what is P(A and B)?
+<div class="options">A. 0.1<br>B. 0.3<br>C. 0.55<br>D. 1.1</div><div class="answer-space">Answer: ______</div></div>
+
+<div class="question"><b>19. [AI fundamentals]</b> A model performs very well on training data but poorly on unseen data. What is the most likely cause?
+<div class="options">A. Underfitting<br>B. Overfitting<br>C. Normalization<br>D. Low variance</div><div class="answer-space">Answer: ______</div></div>
+
+<div class="question"><b>20. [AI fundamentals]</b> In supervised learning, what does a label represent?
+<div class="options">A. The target output associated with an example<br>B. The number of CPU cores<br>C. A random feature removed from the data<br>D. The model's learning rate</div><div class="answer-space">Answer: ______</div></div>
+
+<div class="question"><b>21. [Logic &amp; programming]</b> What is the value of 3 AND 5 using bitwise AND?
+<div class="options">A. 0<br>B. 1<br>C. 3<br>D. 8</div><div class="answer-space">Answer: ______</div></div>
+
+<div class="question"><b>22. [Logic &amp; programming]</b> What is the time complexity of two independent nested loops, each running n times?
+<div class="options">A. O(log n)<br>B. O(n)<br>C. O(n squared)<br>D. O(2n)</div><div class="answer-space">Answer: ______</div></div>
+
+<div class="question"><b>23. [Logic &amp; programming]</b> If all secure systems use authentication, and System X is secure, which conclusion follows?
+<div class="options">A. System X uses authentication<br>B. Every authenticated system is secure<br>C. System X cannot use authentication<br>D. No conclusion is possible</div><div class="answer-space">Answer: ______</div></div>
+
+<div class="question"><b>24. [Logic &amp; programming]</b> A recursive function calls itself with n - 1 and stops when n = 0. What prevents infinite recursion?
+<div class="options">A. A loop counter<br>B. A base case<br>C. A database index<br>D. A compiler flag</div><div class="answer-space">Answer: ______</div></div>
+
+<div class="question"><b>25. [Logic &amp; programming]</b> What is the usual time complexity of the naive recursive Fibonacci algorithm?
+<div class="options">A. O(1)<br>B. O(log n)<br>C. O(n)<br>D. Exponential</div><div class="answer-space">Answer: ______</div></div>
+
+<div class="question"><b>26. [Data structures &amp; algorithms]</b> What is the average-case lookup time for a well-designed hash table?
+<div class="options">A. O(1)<br>B. O(log n)<br>C. O(n)<br>D. O(n squared)</div><div class="answer-space">Answer: ______</div></div>
+
+<div class="question"><b>27. [Data structures &amp; algorithms]</b> Which traversal finds the shortest path in an unweighted graph?
+<div class="options">A. Depth-first search<br>B. Breadth-first search<br>C. Inorder traversal<br>D. Quicksort</div><div class="answer-space">Answer: ______</div></div>
+
+<div class="question"><b>28. [Data structures &amp; algorithms]</b> In a min-heap, which element is always at the root?
+<div class="options">A. The largest element<br>B. The newest element<br>C. The smallest element<br>D. A random element</div><div class="answer-space">Answer: ______</div></div>
+
+<div class="question"><b>29. [Databases]</b> Which constraint uniquely identifies each row in a relational table?
+<div class="options">A. Foreign key<br>B. Primary key<br>C. Check constraint<br>D. View</div><div class="answer-space">Answer: ______</div></div>
+
+<div class="question"><b>30. [Databases]</b> In a database transaction, what does atomicity mean?
+<div class="options">A. The transaction is all completed or all rolled back<br>B. The transaction is always fast<br>C. The data is stored alphabetically<br>D. Only one user can access the database</div><div class="answer-space">Answer: ______</div></div>
+
+<div class="question"><b>31. [Databases]</b> What is a common trade-off of adding a database index?
+<div class="options">A. Faster reads but extra storage and write cost<br>B. Slower reads and no storage cost<br>C. Removal of all duplicate data<br>D. Automatic encryption of the database</div><div class="answer-space">Answer: ______</div></div>
+
+<div class="question"><b>32. [Operating systems]</b> Which scheduling method gives each ready process a fixed time slice in rotation?
+<div class="options">A. First-fit<br>B. Round robin<br>C. Shortest path<br>D. Last-in, first-out</div><div class="answer-space">Answer: ______</div></div>
+
+<div class="question"><b>33. [Operating systems]</b> Compared with processes, threads within one process commonly share which resource?
+<div class="options">A. The entire operating system<br>B. The process address space<br>C. A separate computer<br>D. A different program counter only</div><div class="answer-space">Answer: ______</div></div>
+
+<div class="question"><b>34. [Computer networks]</b> What is the primary purpose of DNS?
+<div class="options">A. Translate domain names into IP addresses<br>B. Encrypt hard drives<br>C. Compress images<br>D. Schedule CPU tasks</div><div class="answer-space">Answer: ______</div></div>
+
+<div class="question"><b>35. [Computer networks]</b> Which protocol provides reliable, ordered delivery of data between applications?
+<div class="options">A. TCP<br>B. UDP<br>C. ARP only<br>D. DNS only</div><div class="answer-space">Answer: ______</div></div>
+
+<div class="question"><b>36. [Software engineering]</b> What is the main benefit of using a version-control branch?
+<div class="options">A. Isolate work so changes can be developed and reviewed safely<br>B. Increase monitor resolution<br>C. Replace all software tests<br>D. Remove the need for documentation</div><div class="answer-space">Answer: ______</div></div>
+
+<div class="question"><b>37. [Software engineering]</b> A REST service is described as stateless when:
+<div class="options">A. The server stores every client screen<br>B. Each request contains the information needed to process it<br>C. The service has no database<br>D. Requests cannot fail</div><div class="answer-space">Answer: ______</div></div>
+
+<div class="question"><b>38. [Discrete math &amp; statistics]</b> For sets A and B, what does A union B contain?
+<div class="options">A. Elements in both sets only<br>B. Elements in A or B or both<br>C. Elements in neither set<br>D. Only the largest element</div><div class="answer-space">Answer: ______</div></div>
+
+<div class="question"><b>39. [Discrete math &amp; statistics]</b> Which measure is generally most affected by one extremely large outlier?
+<div class="options">A. Mean<br>B. Median<br>C. Mode<br>D. Range midpoint only</div><div class="answer-space">Answer: ______</div></div>
+
+<div class="question"><b>40. [AI fundamentals]</b> Which task is a classification problem?
+<div class="options">A. Predicting tomorrow's temperature<br>B. Predicting whether an email is spam<br>C. Predicting house price<br>D. Predicting delivery time in minutes</div><div class="answer-space">Answer: ______</div></div>
+
+<h2>Section B: Invigilator scoring</h2>
+<table>
+<tr><th>Area</th><th>Questions</th><th>Correct</th><th>Percentage</th></tr>
+<tr><td>Logic &amp; programming</td><td>1-5, 21-25</td><td></td><td></td></tr>
+<tr><td>Other BSCS foundations</td><td>6-18, 26-39</td><td></td><td></td></tr>
+<tr><td>AI fundamentals</td><td>19-20, 40</td><td></td><td></td></tr>
+<tr><th>Total</th><th>40</th><th></th><th></th></tr>
+</table>
+<p><b>Screening decision:</b> Recommended to proceed / Further preparation recommended</p>
+<p><b>Assessor notes:</b></p>
+<p>________________________________________________________________________________</p>
+<p>________________________________________________________________________________</p>
+
+<div class="key">
+<h1>Answer Key and Explanations</h1>
+<p class="small">Keep this page separate from the candidate copy during a supervised assessment.</p>
+<table>
+<tr><th>No.</th><th>Answer</th><th>Explanation</th></tr>
+<tr><td>1</td><td>B</td><td>Halving the input each time gives log2(n) iterations.</td></tr>
+<tr><td>2</td><td>C</td><td>The loop adds 1 + 2 + 3 + 4, which equals 10.</td></tr>
+<tr><td>3</td><td>C</td><td>A queue is first-in, first-out: A and B leave first, so C is next.</td></tr>
+<tr><td>4</td><td>B</td><td>Binary search decides which half to discard based on sorted order.</td></tr>
+<tr><td>5</td><td>A</td><td>The second occurrence encountered during the scan is 2.</td></tr>
+<tr><td>6</td><td>A</td><td>The most recently opened bracket must be matched first, which is stack behavior.</td></tr>
+<tr><td>7</td><td>C</td><td>An inorder traversal of a binary search tree visits values in sorted order.</td></tr>
+<tr><td>8</td><td>A</td><td>Insertion sort only needs a linear scan when every item is already in place.</td></tr>
+<tr><td>9</td><td>B</td><td>A non-key attribute depending on another non-key attribute creates a normalization problem.</td></tr>
+<tr><td>10</td><td>C</td><td>WHERE filters rows before grouping; HAVING filters grouped results.</td></tr>
+<tr><td>11</td><td>B</td><td>A cycle of processes waiting for held resources is a deadlock.</td></tr>
+<tr><td>12</td><td>B</td><td>Virtual memory extends usable address space through RAM and secondary storage.</td></tr>
+<tr><td>13</td><td>B</td><td>TLS encrypts the connection and authenticates the server through certificates.</td></tr>
+<tr><td>14</td><td>B</td><td>Routers forward packets between networks using IP addresses.</td></tr>
+<tr><td>15</td><td>A</td><td>Test-driven development starts with a test, then implementation and refactoring.</td></tr>
+<tr><td>16</td><td>C</td><td>A measurable response-time target can be verified with a defined test.</td></tr>
+<tr><td>17</td><td>B</td><td>HT and TH are two of four equally likely outcomes, giving 2/4 = 1/2.</td></tr>
+<tr><td>18</td><td>B</td><td>For independent events, P(A and B) = P(A)P(B) = 0.6 x 0.5 = 0.3.</td></tr>
+<tr><td>19</td><td>B</td><td>Overfitting means the model learned training-specific patterns that do not generalize.</td></tr>
+<tr><td>20</td><td>A</td><td>A label is the known target used to train or evaluate a supervised model.</td></tr>
+<tr><td>21</td><td>B</td><td>Binary 0011 AND 0101 equals 0001, which is 1.</td></tr>
+<tr><td>22</td><td>C</td><td>Two loops that each run n times perform n x n operations.</td></tr>
+<tr><td>23</td><td>A</td><td>This directly applies the stated rule that every secure system uses authentication.</td></tr>
+<tr><td>24</td><td>B</td><td>A base case tells the recursive function when to stop calling itself.</td></tr>
+<tr><td>25</td><td>D</td><td>Naive recursion recomputes many subproblems, producing exponential growth.</td></tr>
+<tr><td>26</td><td>A</td><td>A well-designed hash table provides average constant-time lookup.</td></tr>
+<tr><td>27</td><td>B</td><td>Breadth-first search explores by distance, so it finds the shortest unweighted path.</td></tr>
+<tr><td>28</td><td>C</td><td>The minimum element is kept at the root of a min-heap.</td></tr>
+<tr><td>29</td><td>B</td><td>A primary key uniquely identifies each row in a relational table.</td></tr>
+<tr><td>30</td><td>A</td><td>Atomicity means a transaction fully succeeds or is fully rolled back.</td></tr>
+<tr><td>31</td><td>A</td><td>Indexes improve reads but consume storage and must be updated during writes.</td></tr>
+<tr><td>32</td><td>B</td><td>Round robin assigns each ready process a time slice in rotation.</td></tr>
+<tr><td>33</td><td>B</td><td>Threads in one process commonly share its address space and resources.</td></tr>
+<tr><td>34</td><td>A</td><td>DNS resolves human-readable domain names to IP addresses.</td></tr>
+<tr><td>35</td><td>A</td><td>TCP provides ordered, reliable delivery using acknowledgements and retransmission.</td></tr>
+<tr><td>36</td><td>A</td><td>A branch isolates changes for development, review, and later merging.</td></tr>
+<tr><td>37</td><td>B</td><td>In a stateless service, each request carries the context needed to process it.</td></tr>
+<tr><td>38</td><td>B</td><td>The union contains every element that is in A, B, or both.</td></tr>
+<tr><td>39</td><td>A</td><td>The mean uses every value and is pulled strongly by extreme values.</td></tr>
+<tr><td>40</td><td>B</td><td>Spam detection assigns an input to a category, making it classification.</td></tr>
+</table>
+</div>
+</body>
+</html>
