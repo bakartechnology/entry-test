@@ -167,15 +167,15 @@ function saveDb() {
 let cachedClient = null;
 let cachedDb = null;
 let lastMongoFailTime = 0;
-const MONGO_RETRY_INTERVAL = 10000; // 10s cooldown before retrying if offline
+const MONGO_RETRY_INTERVAL = 8000; // 8s cooldown before retrying if offline
 
-async function getMongoDb() {
+async function getMongoDb(forceRetry = false) {
   const uri = process.env.MONGODB_URI;
   if (!uri) return null;
   if (process.env.VERCEL && (uri.includes('localhost') || uri.includes('127.0.0.1'))) return null;
   if (cachedDb) return cachedDb;
 
-  if (Date.now() - lastMongoFailTime < MONGO_RETRY_INTERVAL) {
+  if (!forceRetry && (Date.now() - lastMongoFailTime < MONGO_RETRY_INTERVAL)) {
     return null;
   }
 
@@ -184,7 +184,8 @@ async function getMongoDb() {
     if (!cachedClient) {
       cachedClient = new MongoClient(uri, {
         maxPoolSize: 10,
-        serverSelectionTimeoutMS: 2000,
+        serverSelectionTimeoutMS: 6000,
+        connectTimeoutMS: 10000,
       });
       await cachedClient.connect();
     }
@@ -210,7 +211,7 @@ async function getAttempt(id) {
   return db.find(record => record.id === id) || null;
 }
 
-async function saveAttempt(record) {
+async function saveAttempt(record, forceMongo = false) {
   // Always persist to local file immediately
   loadDb();
   const idx = db.findIndex(r => r.id === record.id);
@@ -221,15 +222,15 @@ async function saveAttempt(record) {
   }
   await saveDb();
 
-  // Also sync to MongoDB if connected
-  const mdb = await getMongoDb();
+  // Also sync to MongoDB if connected or requested
+  const mdb = await getMongoDb(forceMongo);
   if (mdb) {
     try {
       const copy = { ...record };
       delete copy._id;
       await mdb.collection('attempts').updateOne({ id: record.id }, { $set: copy }, { upsert: true });
     } catch (err) {
-      console.warn('Notice: MongoDB sync skipped, record safely stored in local backup.');
+      console.warn('Notice: MongoDB sync skipped/failed:', err.message);
     }
   }
 }
@@ -238,20 +239,28 @@ async function getAllAttempts() {
   loadDb();
   const localMap = new Map(db.map(r => [r.id, r]));
 
-  const mdb = await getMongoDb();
+  const mdb = await getMongoDb(true);
   if (mdb) {
     try {
       const mongoList = await mdb.collection('attempts').find({}, { projection: { _id: 0 } }).toArray();
+      const mongoMap = new Map(mongoList.map(m => [m.id, m]));
       let localUpdated = false;
 
-      // Sync offline records into MongoDB
+      // Sync offline / local records into MongoDB
       for (const localRecord of db) {
-        const inMongo = mongoList.some(m => m.id === localRecord.id);
-        if (!inMongo) {
+        const mDoc = mongoMap.get(localRecord.id);
+        if (!mDoc) {
           const copy = { ...localRecord };
           delete copy._id;
           await mdb.collection('attempts').updateOne({ id: localRecord.id }, { $set: copy }, { upsert: true }).catch(() => {});
           mongoList.push(localRecord);
+          mongoMap.set(localRecord.id, localRecord);
+        } else if (localRecord.status === 'submitted' && mDoc.status !== 'submitted') {
+          // If local was marked submitted but Mongo was behind, update Mongo
+          const copy = { ...localRecord };
+          delete copy._id;
+          await mdb.collection('attempts').updateOne({ id: localRecord.id }, { $set: copy }, { upsert: true }).catch(() => {});
+          Object.assign(mDoc, localRecord);
         }
       }
 
@@ -260,6 +269,12 @@ async function getAllAttempts() {
         if (!localMap.has(mDoc.id)) {
           db.push(mDoc);
           localUpdated = true;
+        } else {
+          const lRec = localMap.get(mDoc.id);
+          if (mDoc.status === 'submitted' && lRec.status !== 'submitted') {
+            Object.assign(lRec, mDoc);
+            localUpdated = true;
+          }
         }
       }
 
@@ -479,12 +494,13 @@ async function handleApi(req, res, url) {
     if (action === 'tab-switch' && req.method === 'POST') {
       if (record.status !== 'in-progress') return json(res, 200, { status: record.status, tabSwitches: record.tabSwitches });
       record.tabSwitches += 1;
-      if (record.tabSwitches >= MAX_TAB_SWITCHES) {
+      const terminated = record.tabSwitches >= MAX_TAB_SWITCHES;
+      if (terminated) {
         record.status = 'terminated-tab-switch';
         record.score = grade(record);
         record.finishedAt = new Date().toISOString();
       }
-      await saveAttempt(record);
+      await saveAttempt(record, terminated);
       return json(res, 200, { status: record.status, tabSwitches: record.tabSwitches, max: MAX_TAB_SWITCHES });
     }
 
@@ -494,7 +510,7 @@ async function handleApi(req, res, url) {
         record.status = 'submitted';
         record.score = grade(record);
         record.finishedAt = new Date().toISOString();
-        await saveAttempt(record);
+        await saveAttempt(record, true);
       }
       return json(res, 200, {
         result: publicRecord(record),
@@ -518,6 +534,17 @@ async function handleApi(req, res, url) {
   }
 
   // Admin Endpoints
+  if (pathname === '/api/admin/status' && req.method === 'GET') {
+    if (!isValidAdminKey(url.searchParams.get('key'))) return json(res, 401, { error: 'Invalid admin key.' });
+    const mdb = await getMongoDb(true);
+    return json(res, 200, {
+      storage: mdb ? 'mongodb' : 'temporary',
+      isPersistent: !!mdb,
+      isVercel: !!process.env.VERCEL,
+      hasMongoUri: !!process.env.MONGODB_URI
+    });
+  }
+
   if (pathname === '/api/admin/attempts' && req.method === 'GET') {
     if (!isValidAdminKey(url.searchParams.get('key'))) return json(res, 401, { error: 'Invalid admin key.' });
     const all = await getAllAttempts();
